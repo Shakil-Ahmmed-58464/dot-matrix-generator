@@ -4,6 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>8086 16×16 Dot Matrix Studio</title>
+
     <style>
       :root {
         --bg: #0b1020;
@@ -15,9 +16,11 @@
         --on: #61dafb;
         --accent: #8b5cf6;
       }
+
       * {
         box-sizing: border-box;
       }
+
       body {
         margin: 0;
         background: var(--bg);
@@ -28,6 +31,7 @@
           Segoe UI,
           sans-serif;
       }
+
       header {
         padding: 20px 24px;
         border-bottom: 1px solid var(--line);
@@ -36,15 +40,18 @@
         align-items: center;
         gap: 16px;
       }
+
       h1 {
         font-size: 21px;
         margin: 0;
       }
+
       .sub {
         color: var(--muted);
         font-size: 13px;
         margin-top: 4px;
       }
+
       main {
         display: grid;
         grid-template-columns: minmax(420px, 560px) minmax(420px, 1fr);
@@ -53,16 +60,19 @@
         max-width: 1500px;
         margin: auto;
       }
+
       .panel {
         background: var(--panel);
         border: 1px solid var(--line);
         border-radius: 12px;
         padding: 16px;
       }
+
       .panel h2 {
         font-size: 15px;
         margin: 0 0 12px;
       }
+
       .row {
         display: flex;
         gap: 8px;
@@ -70,6 +80,7 @@
         flex-wrap: wrap;
         margin: 8px 0;
       }
+
       button,
       select,
       input {
@@ -79,25 +90,31 @@
         border-radius: 7px;
         padding: 8px 10px;
       }
+
       button {
         cursor: pointer;
       }
+
       button:hover {
         border-color: #50699e;
       }
+
       .primary {
         background: #293b72;
         border-color: #5875bd;
       }
+
       label {
         font-size: 12px;
         color: var(--muted);
       }
+
       .hint {
         font-size: 12px;
         color: var(--muted);
         line-height: 1.5;
       }
+
       .grid {
         width: min(100%, 480px);
         aspect-ratio: 1;
@@ -109,16 +126,19 @@
         border-radius: 8px;
         margin: auto;
       }
+
       .cell {
         background: #151d30;
         border: 1px solid #26324d;
         border-radius: 2px;
         cursor: pointer;
       }
+
       .cell.on {
         background: var(--on);
         box-shadow: 0 0 7px #61dafb88;
       }
+
       pre {
         margin: 0;
         background: #080d18;
@@ -133,6 +153,7 @@
           monospace;
         white-space: pre;
       }
+
       textarea {
         width: 100%;
         min-height: 180px;
@@ -146,12 +167,14 @@
           12px/1.5 Consolas,
           monospace;
       }
+
       .preview {
         display: flex;
         gap: 16px;
         align-items: center;
         flex-wrap: wrap;
       }
+
       .mini {
         display: grid;
         grid-template-columns: repeat(16, 1fr);
@@ -161,12 +184,15 @@
         background: #050912;
         padding: 5px;
       }
+
       .mini div {
         background: #151d30;
       }
+
       .mini div.on {
         background: var(--on);
       }
+
       canvas {
         width: 100%;
         max-width: 650px;
@@ -175,22 +201,27 @@
         border-radius: 8px;
         image-rendering: pixelated;
       }
+
       .controls {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 8px;
       }
+
       .full {
         grid-column: 1/-1;
       }
+
       @media (max-width: 900px) {
         main {
           grid-template-columns: 1fr;
         }
+
         .controls {
           grid-template-columns: 1fr;
         }
       }
+
       .badge {
         font-size: 11px;
         padding: 4px 7px;
@@ -200,22 +231,29 @@
       }
     </style>
   </head>
+
   <body>
     <header>
       <div>
         <h1>8086 16×16 Dot Matrix Studio</h1>
         <div class="sub">
-          Visual bitmap editor • sample-compatible 32-byte glyph output •
-          marquee preview
+          Row-scan bitmap editor • D82R.ASM-compatible output • 8086
         </div>
       </div>
+
       <span class="badge">No server required</span>
     </header>
 
     <main>
+      <!-- =========================================================
+           1. DRAW
+      ========================================================== -->
+
       <section class="panel">
         <h2>1. Draw a glyph</h2>
+
         <div id="grid" class="grid"></div>
+
         <div class="row">
           <button class="primary" onclick="clearGrid()">Clear</button>
           <button onclick="invertGrid()">Invert</button>
@@ -223,62 +261,88 @@
           <button onclick="flipV()">Flip V</button>
           <button onclick="rotate()">Rotate 90°</button>
         </div>
+
         <div class="controls">
-          <label
-            >Character / comment <input id="charName" value="A" maxlength="20"
-          /></label>
-          <label
-            >Bit order
+          <label>
+            Character / comment
+            <input id="charName" value="82" maxlength="20" />
+          </label>
+
+          <label>
+            Bit order
             <select id="bitOrder">
-              <option value="msb">MSB = top row</option>
-              <option value="lsb">LSB = top row</option>
-            </select></label
-          >
-          <label
-            >Byte layout
-            <select id="layout">
-              <option value="sample">Sample kit: top 8 + bottom 8</option>
-              <option value="rows">16 row bytes (one byte/row)</option>
-            </select></label
-          >
-          <label
-            >Active level
+              <option value="normal" selected>
+                Normal — bit7 = left
+              </option>
+              <option value="reverse">
+                Reverse — bit0 = left
+              </option>
+            </select>
+          </label>
+
+          <label>
+            Active level
             <select id="active">
+              <option value="0" selected>0 = LED ON</option>
               <option value="1">1 = LED ON</option>
-              <option value="0">0 = LED ON</option>
-            </select></label
-          >
+            </select>
+          </label>
+
+          <label>
+            Output format
+            <select id="outputFormat">
+              <option value="binary" selected>Binary</option>
+              <option value="hex">Hexadecimal</option>
+            </select>
+          </label>
         </div>
+
         <p class="hint">
-          For the code you posted, keep <b>Sample kit: top 8 + bottom 8</b>. The
-          first 16 bytes represent the upper 8 rows and the next 16 bytes the
-          lower 8 rows, with each byte belonging to a column.
+          The bitmap is interpreted as <b>16 rows × 16 columns</b>. Each row
+          generates two bytes: the first byte goes to <b>XPA</b> (columns
+          0–7), and the second byte goes to <b>XPB</b> (columns 8–15).
+        </p>
+
+        <p class="hint">
+          The generated assembly follows the supplied
+          <b>D82R.ASM</b> row-scan structure.
         </p>
       </section>
 
+      <!-- =========================================================
+           2. ASSEMBLY
+      ========================================================== -->
+
       <section class="panel">
         <h2>2. Assembly output</h2>
+
         <div
           class="panel"
-          style="padding: 12px; margin-bottom: 12px; background: var(--panel2)"
+          style="
+            padding: 12px;
+            margin-bottom: 12px;
+            background: var(--panel2);
+          "
         >
           <div class="row">
-            <label
-              >Export mode
+            <label>
+              Export mode
               <select id="exportMode">
-                <option value="static">Static display</option>
+                <option value="static" selected>Static row scan</option>
                 <option value="marquee">Animated / marquee</option>
               </select>
             </label>
-            <label
-              >Marquee direction
+
+            <label>
+              Marquee direction
               <select id="exportDir">
-                <option value="left">Left</option>
+                <option value="left" selected>Left</option>
                 <option value="right">Right</option>
               </select>
             </label>
-            <label
-              >Speed
+
+            <label>
+              Speed
               <select id="exportSpeed">
                 <option value="slow">Slow</option>
                 <option value="medium" selected>Medium</option>
@@ -286,678 +350,1283 @@
               </select>
             </label>
           </div>
+
           <div class="row">
             <button class="primary" onclick="downloadFullAsm()">
               Export full .ASM
             </button>
-            <button onclick="copyFullAsm()">Copy full assembly</button>
+
+            <button onclick="copyFullAsm()">
+              Copy full assembly
+            </button>
           </div>
+
           <p class="hint">
-            Static export uses your current 16×16 bitmap. Marquee export creates
-            a complete template with the same XPA/XPB/XPC/PO interface and a
-            pixel-column scrolling loop.
+            Static output uses the same row-scan structure as D82R.ASM.
+            Marquee output keeps the same XPA/XPB/XPC/PO interface.
           </p>
         </div>
+
         <pre id="asm"></pre>
+
         <div class="row">
-          <button class="primary" onclick="copyAsm()">Copy DB</button
-          ><button onclick="downloadAsm()">Download .asm snippet</button>
+          <button class="primary" onclick="copyAsm()">
+            Copy TAB
+          </button>
+
+          <button onclick="downloadAsm()">
+            Download .asm snippet
+          </button>
         </div>
-        <h2 style="margin-top: 18px">3. Generated marquee helper</h2>
+
+        <h2 style="margin-top: 18px">
+          3. Generated marquee helper
+        </h2>
+
         <pre id="marquee"></pre>
       </section>
 
+      <!-- =========================================================
+           3. PREVIEW
+      ========================================================== -->
+
       <section class="panel">
         <h2>4. Marquee / animation preview</h2>
+
         <div class="row">
-          <label
-            >Text <input id="marqueeText" value="HELLO" maxlength="30"
-          /></label>
-          <label
-            >Speed <input id="speed" type="range" min="1" max="20" value="6"
-          /></label>
-          <button class="primary" onclick="toggleAnim()" id="animBtn">
+          <label>
+            Text
+            <input id="marqueeText" value="HELLO" maxlength="30" />
+          </label>
+
+          <label>
+            Speed
+            <input
+              id="speed"
+              type="range"
+              min="1"
+              max="20"
+              value="6"
+            />
+          </label>
+
+          <button
+            class="primary"
+            onclick="toggleAnim()"
+            id="animBtn"
+          >
             Play
           </button>
-          <button onclick="resetAnim()">Reset</button>
+
+          <button onclick="resetAnim()">
+            Reset
+          </button>
         </div>
-        <canvas id="canvas" width="640" height="256"></canvas>
+
+        <canvas
+          id="canvas"
+          width="640"
+          height="256"
+        ></canvas>
+
         <p class="hint">
-          The preview scrolls one column at a time. The 16×16 window is the area
-          your physical matrix sees. This lets you decide the animation
-          direction and spacing before writing the 8086 routine.
+          The preview shows the same 16×16 viewing area used by the physical
+          matrix. The preview is independent from the generated assembly.
         </p>
       </section>
 
+      <!-- =========================================================
+           4. TEXT TO BITMAP
+      ========================================================== -->
+
       <section class="panel">
-        <h2>5. Text → bitmap (quick helper)</h2>
+        <h2>5. Text → bitmap</h2>
+
         <div class="row">
-          <label>Text <input id="textInput" value="A" maxlength="8" /></label>
-          <label
-            >Font
+          <label>
+            Text
+            <input
+              id="textInput"
+              value="82"
+              maxlength="8"
+            />
+          </label>
+
+          <label>
+            Font
             <select id="font">
               <option>bold 16px monospace</option>
               <option>16px monospace</option>
               <option>bold 15px Arial</option>
-            </select></label
+            </select>
+          </label>
+
+          <button
+            class="primary"
+            onclick="textToBitmap()"
           >
-          <button class="primary" onclick="textToBitmap()">
             Render into 16×16
           </button>
         </div>
+
         <p class="hint">
-          This is a convenience renderer, not a font ROM. Always visually verify
-          the resulting bitmap on your actual kit because orientation and
-          active-high/active-low wiring vary.
+          This renders the selected text into the 16×16 editor. Always verify
+          the bitmap against the actual LED kit.
         </p>
       </section>
     </main>
 
     <script>
+      /*
+       * ============================================================
+       * 8086 16x16 DOT MATRIX STUDIO
+       *
+       * Hardware model:
+       *
+       * XPA   = 0FF28H   columns 0-7
+       * XPB   = 0FF29H   columns 8-15
+       * XPC   = 0FF2AH   rows 0-7
+       * XPCTL = 0FF2BH
+       * PO    = 0FF80H   rows 8-15
+       *
+       * Row scan:
+       *
+       * TAB + SI
+       * TAB + SI + 1
+       *
+       * SI starts at 0000H and increases by 2.
+       *
+       * AH starts at 80H and rotates right once every row.
+       *
+       * 0 = LED ON
+       *
+       * ============================================================
+       */
+
       const N = 16;
-      let bits = Array.from({ length: N }, () => Array(N).fill(0));
-      let drawing = false,
-        playing = false,
-        offset = 0,
-        timer = null;
+
+      let bits = Array.from(
+        { length: N },
+        () => Array(N).fill(0)
+      );
+
+      let drawing = false;
+      let playing = false;
+      let offset = 0;
+      let timer = null;
 
       const grid = document.getElementById("grid");
-      for (let r = 0; r < N; r++)
+
+      /*
+       * ============================================================
+       * CREATE 16x16 GRID
+       * ============================================================
+       */
+
+      for (let r = 0; r < N; r++) {
         for (let c = 0; c < N; c++) {
           const d = document.createElement("div");
+
           d.className = "cell";
+
           d.dataset.r = r;
           d.dataset.c = c;
+
           d.onpointerdown = (e) => {
             drawing = true;
             toggle(r, c);
             e.preventDefault();
           };
+
           d.onpointerenter = () => {
-            if (drawing) ((bits[r][c] = 1), render());
+            if (drawing) {
+              bits[r][c] = 1;
+              render();
+            }
           };
+
           grid.appendChild(d);
         }
-      document.onpointerup = () => (drawing = false);
+      }
+
+      document.onpointerup = () => {
+        drawing = false;
+      };
+
+      /*
+       * ============================================================
+       * RENDER
+       * ============================================================
+       */
 
       function render() {
-        [...grid.children].forEach((d, i) =>
-          d.classList.toggle("on", !!bits[Math.floor(i / N)][i % N]),
-        );
-        document.getElementById("asm").textContent = makeAsm();
-        document.getElementById("marquee").textContent = makeMarquee();
+        [...grid.children].forEach((d, i) => {
+          const r = Math.floor(i / N);
+          const c = i % N;
+
+          d.classList.toggle(
+            "on",
+            !!bits[r][c]
+          );
+        });
+
+        document.getElementById("asm").textContent =
+          makeAsm();
+
+        document.getElementById("marquee").textContent =
+          makeMarquee();
       }
+
+      /*
+       * ============================================================
+       * BASIC BITMAP OPERATIONS
+       * ============================================================
+       */
+
       function toggle(r, c) {
         bits[r][c] ^= 1;
         render();
       }
+
       function clearGrid() {
-        bits = Array.from({ length: N }, () => Array(N).fill(0));
+        bits = Array.from(
+          { length: N },
+          () => Array(N).fill(0)
+        );
+
         render();
       }
+
       function invertGrid() {
-        bits = bits.map((row) => row.map((v) => 1 - v));
+        bits = bits.map((row) =>
+          row.map((v) => 1 - v)
+        );
+
         render();
       }
+
       function flipH() {
-        bits = bits.map((row) => [...row].reverse());
+        bits = bits.map((row) =>
+          [...row].reverse()
+        );
+
         render();
       }
+
       function flipV() {
         bits = [...bits].reverse();
+
         render();
       }
+
       function rotate() {
-        let b = Array.from({ length: N }, () => Array(N).fill(0));
-        for (let r = 0; r < N; r++)
-          for (let c = 0; c < N; c++) b[c][N - 1 - r] = bits[r][c];
+        const b = Array.from(
+          { length: N },
+          () => Array(N).fill(0)
+        );
+
+        for (let r = 0; r < N; r++) {
+          for (let c = 0; c < N; c++) {
+            b[c][N - 1 - r] = bits[r][c];
+          }
+        }
+
         bits = b;
+
         render();
       }
 
-      function byteFor(arr, reverse = false) {
-        let x = 0;
+      /*
+       * ============================================================
+       * BIT / BYTE GENERATION
+       * ============================================================
+       *
+       * D82R.ASM expects:
+       *
+       * bit7 -> left pixel in the logical bitmap
+       * bit0 -> right pixel
+       *
+       * Then REV reverses the byte before sending it to hardware.
+       *
+       * Therefore TAB stores the bitmap exactly as visually drawn.
+       *
+       * Example:
+       *
+       * 11111111 -> 11111111
+       * 11000011 -> 11000011
+       *
+       * For asymmetric values, REV handles physical orientation.
+       *
+       * ============================================================
+       */
+
+      function getActiveValue(v) {
+        const active =
+          document.getElementById("active").value;
+
+        if (active === "0") {
+          // Logical bitmap 1 means LED ON.
+          // Hardware data uses 0 = ON.
+          return v ? 0 : 1;
+        }
+
+        // Hardware uses 1 = ON.
+        return v ? 1 : 0;
+      }
+
+      function getRowByte(row, startColumn) {
+        let value = 0;
+
         for (let i = 0; i < 8; i++) {
-          let bit = arr[i];
-          if (reverse) bit = arr[7 - i];
-          x |= (bit ? 1 : 0) << (7 - i);
+          const pixel =
+            bits[row][startColumn + i];
+
+          const hardwareBit =
+            getActiveValue(pixel);
+
+          value |=
+            (hardwareBit & 1) <<
+            (7 - i);
         }
-        return x;
+
+        return value;
       }
-      function hex(x) {
-        return "0" + x.toString(16).toUpperCase().padStart(2, "0") + "H";
-      }
-      function sampleBytes() {
-        const rev = document.getElementById("bitOrder").value === "lsb";
-        const active = document.getElementById("active").value === "1";
-        const on = (v) => (active ? (v ? 1 : 0) : v ? 0 : 1);
-        let top = [],
-          bot = [];
-        for (let c = 0; c < 16; c++) {
-          let a = [],
-            b = [];
-          for (let r = 0; r < 8; r++) a.push(on(bits[r][c]));
-          for (let r = 8; r < 16; r++) b.push(on(bits[r][c]));
-          top.push(byteFor(a, rev));
-          bot.push(byteFor(b, rev));
+
+      function getRowBytes() {
+        const rows = [];
+
+        for (let r = 0; r < 16; r++) {
+          rows.push({
+            left: getRowByte(r, 0),
+            right: getRowByte(r, 8)
+          });
         }
-        return [top, bot];
+
+        return rows;
       }
+
+      /*
+       * ============================================================
+       * FORMAT BYTE
+       * ============================================================
+       */
+
+      function byteToBinary(value) {
+        return value
+          .toString(2)
+          .padStart(8, "0") + "B";
+      }
+
+      function byteToHex(value) {
+        return (
+          "0" +
+          value
+            .toString(16)
+            .toUpperCase()
+            .padStart(2, "0") +
+          "H"
+        );
+      }
+
+      function formatByte(value) {
+        const format =
+          document.getElementById(
+            "outputFormat"
+          ).value;
+
+        if (format === "hex") {
+          return byteToHex(value);
+        }
+
+        return byteToBinary(value);
+      }
+
+      /*
+       * ============================================================
+       * TAB ONLY
+       * ============================================================
+       */
+
+      function makeTab() {
+        const name =
+          document.getElementById("charName").value ||
+          "GLYPH";
+
+        const rows = getRowBytes();
+
+        let output =
+          `TAB:\t;-- ${name} --  ` +
+          `0 = LED on, written exactly as seen ` +
+          `(left pixel first)\n`;
+
+        rows.forEach((row, index) => {
+          output +=
+            ` DB ${formatByte(row.left)},${formatByte(row.right)}` +
+            `   ; row ${index}\n`;
+        });
+
+        return output;
+      }
+
+      /*
+       * ============================================================
+       * ASSEMBLY PREVIEW
+       * ============================================================
+       */
+
       function makeAsm() {
-        const name = document.getElementById("charName").value || "glyph";
-        if (document.getElementById("layout").value === "rows") {
-          const rev = document.getElementById("bitOrder").value === "lsb";
-          const active = document.getElementById("active").value === "1";
-          let rows = [];
-          for (let r = 0; r < 16; r++) {
-            let a = bits[r].map((v) => (active ? v : 1 - v));
-            rows.push(byteFor(a, rev));
-          }
-          return `;-- ${name}: 16x16 --\\nDB  ${rows.map(hex).join(",")}\\n`;
-        }
-        const [top, bot] = sampleBytes();
-        return `;-- ${name}: 16x16, sample kit format --\\nDB  ${top.map(hex).join(",")}\\nDB  ${bot.map(hex).join(",")}\\n`;
-      }
-      function makeMarquee() {
-        return `; ==========================================
-; 16x16 marquee control — logic/template
-; ==========================================
-; SHIFT = number of columns to move
-; DIR = +1 (left) or -1 (right)
-;
-; Put the next 16 display columns in a RAM
-; buffer, then let DISP1 multiplex that buffer.
-;
-; Example control:
-;
-;   MOV  SHIFT,1       ; one LED column
-;   CALL MARQUEE_STEP
-;   CALL DELAY
-;   JMP  DISPLAY_LOOP
-;
-; MARQUEE_STEP should:
-;   1. shift the 16-column display buffer
-;   2. fetch the next bitmap column from TAB
-;   3. insert that column at the entering edge
-;   4. leave multiplexing to DISP1
-;
-; This separation makes animation independent
-; from the physical XPA/XPB/XPC hardware.`;
+        return makeStaticAsm();
       }
 
-      function copyAsm() {
-        navigator.clipboard.writeText(
-          document.getElementById("asm").textContent,
-        );
-      }
-      function downloadAsm() {
-        let a = document.createElement("a");
-        a.href = URL.createObjectURL(
-          new Blob([document.getElementById("asm").textContent], {
-            type: "text/plain",
-          }),
-        );
-        a.download =
-          (document.getElementById("charName").value || "glyph") + ".asm";
-        a.click();
-      }
-      ["bitOrder", "layout", "active", "charName"].forEach(
-        (id) => (document.getElementById(id).oninput = render),
-      );
+      /*
+       * ============================================================
+       * STATIC D82R.ASM GENERATOR
+       * ============================================================
+       */
 
-      const canvas = document.getElementById("canvas"),
-        ctx = canvas.getContext("2d");
-      function drawPreview() {
-        ctx.fillStyle = "#050912";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        const text = document.getElementById("marqueeText").value || "A";
-        const cell = 16,
-          gap = 2,
-          W = 18;
-        // use browser font as a wide bitmap source
-        const off = document.createElement("canvas");
-        off.width = Math.max(16, text.length * 18 + 16);
-        off.height = 16;
-        const oc = off.getContext("2d");
-        oc.fillStyle = "black";
-        oc.fillRect(0, 0, off.width, 16);
-        oc.fillStyle = "white";
-        oc.font = "bold 15px monospace";
-        oc.textBaseline = "top";
-        oc.fillText(text, 1, -1);
-        const start = offset % off.width;
-        const sx = Math.floor(start);
-        for (let r = 0; r < 16; r++)
-          for (let c = 0; c < 16; c++) {
-            let x = sx + c,
-              y = r;
-            let pix = 0;
-            if (x < off.width) {
-              let d = oc.getImageData(x, y, 1, 1).data;
-              pix = d[0] > 100;
-            }
-            ctx.fillStyle = pix ? "#61dafb" : "#151d30";
-            ctx.fillRect(c * W + 1, r * W + 1, 14, 14);
-          }
-      }
-      function animate() {
-        if (!playing) return;
-        offset += 1;
-        drawPreview();
-        timer = setTimeout(
-          animate,
-          Math.max(
-            20,
-            220 - Number(document.getElementById("speed").value) * 10,
-          ),
-        );
-      }
-      function toggleAnim() {
-        playing = !playing;
-        document.getElementById("animBtn").textContent = playing
-          ? "Pause"
-          : "Play";
-        if (playing) animate();
-        else clearTimeout(timer);
-      }
-      function resetAnim() {
-        offset = 0;
-        playing = false;
-        clearTimeout(timer);
-        document.getElementById("animBtn").textContent = "Play";
-        drawPreview();
-      }
-
-      function textToBitmap() {
-        const text = document.getElementById("textInput").value || "A";
-        const off = document.createElement("canvas");
-        off.width = 128;
-        off.height = 32;
-        const oc = off.getContext("2d");
-        oc.fillStyle = "black";
-        oc.fillRect(0, 0, 128, 32);
-        oc.fillStyle = "white";
-        oc.font = document.getElementById("font").value;
-        oc.textBaseline = "top";
-        oc.fillText(text, 0, 0);
-        const data = oc.getImageData(0, 0, 128, 32).data;
-        bits = Array.from({ length: 16 }, () => Array(16).fill(0));
-        // crop the first 16x16 pixels of rendered text
-        for (let r = 0; r < 16; r++)
-          for (let c = 0; c < 16; c++)
-            bits[r][c] = data[(r * 128 + c) * 4] > 100 ? 1 : 0;
-        render();
-      }
-
-      function asmHex(x) {
-        return "0" + x.toString(16).toUpperCase().padStart(2, "0") + "H";
-      }
-      function getGlyphBytes() {
-        const rev = document.getElementById("bitOrder").value === "lsb";
-        const active = document.getElementById("active").value === "1";
-        const on = (v) => (active ? (v ? 1 : 0) : v ? 0 : 1);
-        let top = [],
-          bot = [];
-        for (let c = 0; c < 16; c++) {
-          let a = [],
-            b = [];
-          for (let r = 0; r < 8; r++) a.push(on(bits[r][c]));
-          for (let r = 8; r < 16; r++) b.push(on(bits[r][c]));
-          top.push(byteFor(a, rev));
-          bot.push(byteFor(b, rev));
-        }
-        return { top, bot };
-      }
-      function fullAsmStatic() {
-        const g = getGlyphBytes(),
-          name = (document.getElementById("charName").value || "GLYPH").replace(
-            /[^A-Za-z0-9_ -]/g,
-            "",
+      function makeStaticAsm() {
+        const name =
+          sanitizeName(
+            document.getElementById(
+              "charName"
+            ).value || "GLYPH"
           );
-        return `; ============================================================
-; 8086 16x16 DOT MATRIX - STATIC DISPLAY
-; Generated by 8086 Dot Matrix Studio
-; ============================================================
-XPA   EQU 0FF28H
-XPB   EQU 0FF29H
-XPC   EQU 0FF2AH
-XPCTL EQU 0FF2BH
-PO    EQU 0FF80H
 
-DATA SEGMENT AT 0
- ORG 1B90H
-FL  DB ?
-RH  DW ?
-RL  DB ?
-PAG DW ?
-DATA ENDS
+        return `;D82R.ASM,USR-LED 16X16, STATIC ROW SCAN
+;Generated by 8086 16x16 Dot Matrix Studio
+;
+;0 = LED ON
+;TAB stores each row as:
+;left 8 pixels, right 8 pixels
+;
+;XPA = columns 0-7
+;XPB = columns 8-15
+;XPC = rows 0-7
+;PO  = rows 8-15
+;
+;Bitmap: ${name}
 
-CODE SEGMENT
- ASSUME CS:CODE,DS:DATA
- ORG 2DC0H
+\tXPA\tEQU\t0FF28H\t;L-SAO-1  columns 0-7
+\tXPB\tEQU\t0FF29H\t;L-SAO-2  columns 8-15
+\tXPC\tEQU\t0FF2AH\t;H-CODE-2 rows 0-7
+\tXPCTL\tEQU\t0FF2BH
+
+;---------------------------------
+
+\tPO\tEQU\t0FF80H\t;H-CODE-1 rows 8-15
+
+DATA\tSEGMENT\tAT\t0
+\tORG\t1B90H
+FL\tDB\t?
+RH\tDW\t?
+RL\tDB\t?
+PAG\tDW\t?
+DATA\tENDS
+
+CODE\tSEGMENT
+\tASSUME\tCS:CODE,DS:DATA
+\tORG\t2DC0H
 
 START:
- MOV DX,XPCTL
- MOV AL,80H
- OUT DX,AL
- CALL OFFLED
- MOV FL,00H
- MOV PAG,XPA
+\tMOV DX,XPCTL
+\tMOV AL,80H
+\tOUT DX,AL
+\tCALL BLANK
 
-; Display the glyph continuously
-MAIN:
- MOV RH,0000H
- CALL DISPW
- JMP MAIN
+X0:
+\tMOV SI,0000H\t\t;SI = row * 2
+\tMOV AH,80H\t\t;10000000B - row select
 
-DISPW:
- CLC
- PUSH RH
- MOV RL,01H
+X1:
+\tCALL BLANK
 
-DISP1:
- MOV SI,RH
- MOV BX,OFFSET TAB
+\tMOV BX,OFFSET TAB
 
- MOV AL,CS:[BX+SI]
- MOV DX,XPC
- OUT DX,AL
+\tMOV AL,CS:[BX+SI]\t;left 8 pixels
+\tCALL REV\t\t\t;flip to kit order
+\tMOV DX,XPA
+\tOUT DX,AL
 
- MOV AL,CS:[BX+SI+10H]
- MOV DX,PO
- OUT DX,AL
+\tMOV AL,CS:[BX+SI+1]\t;right 8 pixels
+\tCALL REV
+\tMOV DX,XPB
+\tOUT DX,AL
 
- MOV DX,PAG
- MOV AL,RL
- NOT AL
- OUT DX,AL
+\tMOV DX,XPC\t\t;rows 0-7
+\tCMP SI,0010H
+\tJB X2
+\tMOV DX,PO\t\t;rows 8-15
 
- MOV CX,0080H
- LOOP $
+X2:
+\tMOV AL,AH
+\tOUT DX,AL\t\t;this row on
 
- CALL OFFLED
- INC RH
+\tMOV CX,0080H
+\tLOOP $
 
- MOV AX,RH
- AND AX,000FH
- CMP AX,0000H
- JNZ CON2
- ADD RH,0010H
+\tROR AH,1\t\t;next row
+\tADD SI,0002H
+\tCMP SI,0020H
+\tJB X1
 
-CON2:
- RCL RL,1
- JNC DISP1
+\tJMP X0
 
- CMP FL,00H
- JNZ EXIT
- INC FL
- CLC
- MOV RL,01H
- MOV PAG,XPB
- JMP DISP1
+;--------------------------------------------------
+; Reverse the 8 bits of AL:
+; bit7 <-> bit0
+; bit6 <-> bit1
+; bit5 <-> bit2
+; bit4 <-> bit3
+;--------------------------------------------------
 
-EXIT:
- MOV PAG,XPA
- MOV FL,00H
- POP RH
- RET
+REV:
+\tPUSH CX
+\tMOV CX,0008H
 
-OFFLED:
- MOV DX,XPA
- MOV AL,0FFH
- OUT DX,AL
- MOV DX,XPB
- OUT DX,AL
- RET
+REV1:
+\tSHR AL,1\t\t;lowest bit of AL -> CF
+\tRCL DH,1\t\t;CF -> DH
+\tLOOP REV1
 
-TAB:
-; ${name}: 16x16
-DB  ${g.top.map(asmHex).join(",")}
-DB  ${g.bot.map(asmHex).join(",")}
+\tMOV AL,DH
+\tPOP CX
+\tRET
 
-CODE ENDS
-END START
+;--------------------------------------------------
+; Turn all LEDs OFF
+;--------------------------------------------------
+
+BLANK:
+\tMOV DX,XPA
+\tMOV AL,0FFH
+\tOUT DX,AL
+
+\tMOV DX,XPB
+\tOUT DX,AL
+
+\tMOV DX,XPC
+\tMOV AL,00H
+\tOUT DX,AL
+
+\tMOV DX,PO
+\tOUT DX,AL
+
+\tRET
+
+;--------------------------------------------------
+; Bitmap data
+;--------------------------------------------------
+
+${makeTab()}
+
+CODE\tENDS
+END\tSTART
 `;
       }
-      function fullAsmMarquee() {
-        const g = getGlyphBytes(),
-          dir = document.getElementById("exportDir").value;
-        const speed = document.getElementById("exportSpeed").value;
-        const delay = { slow: "0040H", medium: "0020H", fast: "0008H" }[speed];
-        const step = dir === "left" ? "SHL" : "SHR";
-        return `; ============================================================
-; 8086 16x16 DOT MATRIX - PIXEL MARQUEE
-; Generated by 8086 Dot Matrix Studio
+
+      /*
+       * ============================================================
+       * MARQUEE
+       * ============================================================
+       *
+       * The physical display is still refreshed using the same
+       * row-scan routine.
+       *
+       * The bitmap is shifted horizontally in RAM.
+       *
+       * This version generates a practical template rather than
+       * the previous incorrect column-multiplexing architecture.
+       * ============================================================
+       */
+
+      function makeMarquee() {
+        const dir =
+          document.getElementById(
+            "exportDir"
+          ).value;
+
+        const speed =
+          document.getElementById(
+            "exportSpeed"
+          ).value;
+
+        const delay = {
+          slow: "0040H",
+          medium: "0020H",
+          fast: "0008H"
+        }[speed];
+
+        const shiftRoutine =
+          dir === "left"
+            ? `
+;--------------------------------------------------
+; Shift bitmap LEFT by one column
+;--------------------------------------------------
+
+SHIFT_LEFT:
+\tMOV SI,OFFSET BUF
+\tMOV CX,16
+
+SHIFT_LEFT_ROW:
+\tPUSH CX
+
+\tMOV DI,SI
+\tMOV AL,CS:[DI+1]
+\tMOV CS:[DI],AL
+
+\tINC DI
+
+\tMOV AL,CS:[DI+1]
+\tMOV CS:[DI],AL
+
+\tPOP CX
+\tADD SI,2
+\tLOOP SHIFT_LEFT_ROW
+
+\tRET
+`
+            : `
+;--------------------------------------------------
+; Shift bitmap RIGHT by one column
+;--------------------------------------------------
+
+SHIFT_RIGHT:
+\tMOV SI,OFFSET BUF
+\tMOV CX,16
+
+SHIFT_RIGHT_ROW:
+\tPUSH CX
+
+\tMOV DI,SI
+\tMOV AL,CS:[DI+1]
+\tMOV CS:[DI],AL
+
+\tMOV AL,CS:[DI]
+\tMOV CS:[DI+1],AL
+
+\tPOP CX
+\tADD SI,2
+\tLOOP SHIFT_RIGHT_ROW
+
+\tRET
+`;
+
+        return `;============================================================
+; 8086 16x16 DOT MATRIX - ROW SCAN MARQUEE
+;
 ; Direction: ${dir.toUpperCase()}
 ; Speed: ${speed.toUpperCase()}
 ;
-; The glyph is shifted one column per frame.
-; This is a self-contained starting template using the
-; same I/O addresses as the supplied LEDQD.ASM.
-; ============================================================
-XPA   EQU 0FF28H
-XPB   EQU 0FF29H
-XPC   EQU 0FF2AH
-XPCTL EQU 0FF2BH
-PO    EQU 0FF80H
+; Hardware interface is identical to D82R.ASM.
+;============================================================
 
-DATA SEGMENT AT 0
- ORG 1B90H
-FL      DB ?
-RH      DW ?
-RL      DB ?
-PAG     DW ?
-SHIFT   DB ?
-BUF0    DB 16 DUP(?)
-BUF1    DB 16 DUP(?)
-DATA ENDS
+XPA\tEQU\t0FF28H
+XPB\tEQU\t0FF29H
+XPC\tEQU\t0FF2AH
+XPCTL\tEQU\t0FF2BH
+PO\tEQU\t0FF80H
 
-CODE SEGMENT
- ASSUME CS:CODE,DS:DATA
- ORG 2DC0H
+DATA\tSEGMENT\tAT\t0
+\tORG\t1B90H
+
+BUF\tDB\t32 DUP(?)
+
+DATA\tENDS
+
+CODE\tSEGMENT
+\tASSUME\tCS:CODE,DS:DATA
+\tORG\t2DC0H
 
 START:
- MOV DX,XPCTL
- MOV AL,80H
- OUT DX,AL
- CALL OFFLED
+\tMOV DX,XPCTL
+\tMOV AL,80H
+\tOUT DX,AL
 
- MOV FL,00H
- MOV PAG,XPA
- MOV SHIFT,00H
- CALL LOADGLYPH
+\tCALL BLANK
+\tCALL LOAD_GLYPH
 
 MAIN:
- CALL DISPLAY_BUFFER
- CALL MARQUEE_DELAY
- CALL MARQUEE_STEP
- JMP MAIN
+\tCALL DISPLAY
+\tCALL MARQUEE_DELAY
+\tCALL SHIFT_BITMAP
+\tJMP MAIN
 
-; ------------------------------------------------------------
-; Display the 16x16 buffer.
-; BUF0 = upper 8 rows, BUF1 = lower 8 rows.
-; ------------------------------------------------------------
-DISPLAY_BUFFER:
- PUSH AX
- PUSH BX
- PUSH CX
- PUSH DX
+;--------------------------------------------------
+; Display the 16x16 bitmap
+; BUF:
+;   row 0 = BUF+0
+;   row 1 = BUF+2
+;   ...
+;   row 15 = BUF+30
+;--------------------------------------------------
 
- MOV BX,OFFSET BUF0
- MOV SI,0000H
- MOV RL,01H
+DISPLAY:
+\tMOV SI,0000H
+\tMOV AH,80H
 
-DISP_LOOP:
- MOV AL,CS:[BX+SI]
- MOV DX,XPC
- OUT DX,AL
+DISPLAY_ROW:
+\tCALL BLANK
 
- MOV BX,OFFSET BUF1
- MOV AL,CS:[BX+SI]
- MOV DX,PO
- OUT DX,AL
+\tMOV BX,OFFSET BUF
 
- MOV DX,XPA
- MOV AL,RL
- NOT AL
- OUT DX,AL
+\tMOV AL,CS:[BX+SI]
+\tCALL REV
+\tMOV DX,XPA
+\tOUT DX,AL
 
- MOV CX,0080H
- LOOP $
+\tMOV AL,CS:[BX+SI+1]
+\tCALL REV
+\tMOV DX,XPB
+\tOUT DX,AL
 
- CALL OFFLED
+\tMOV DX,XPC
+\tCMP SI,0010H
+\tJB DISPLAY_ROW_SELECT
 
- MOV BX,OFFSET BUF0
- INC SI
+\tMOV DX,PO
 
- RCL RL,1
- JNC DISP_LOOP
+DISPLAY_ROW_SELECT:
+\tMOV AL,AH
+\tOUT DX,AL
 
- POP DX
- POP CX
- POP BX
- POP AX
- RET
+\tMOV CX,0080H
+\tLOOP $
 
-; ------------------------------------------------------------
-; Shift the 16-column bitmap by one column.
-; For a production multi-character marquee, replace the
-; incoming-column source with the next column from TAB.
-; ------------------------------------------------------------
-MARQUEE_STEP:
- PUSH AX
- PUSH BX
- PUSH CX
- PUSH DX
- PUSH SI
- PUSH DI
+\tROR AH,1
+\tADD SI,0002H
+\tCMP SI,0020H
+\tJB DISPLAY_ROW
 
- MOV SI,OFFSET BUF0
- MOV DI,OFFSET BUF1
- MOV CX,15
+\tRET
 
-${
-  dir === "left"
-    ? `SHIFT_LEFT:
- MOV AL,CS:[SI+1]
- MOV CS:[SI],AL
- INC SI
- LOOP SHIFT_LEFT
+${shiftRoutine}
 
- MOV SI,OFFSET BUF0
- MOV AL,CS:[SI+15]
- MOV CS:[SI+15],AL
-
- MOV SI,OFFSET BUF1
- MOV CX,15
-SHIFT_LEFT_B:
- MOV AL,CS:[SI+1]
- MOV CS:[SI],AL
- INC SI
- LOOP SHIFT_LEFT_B`
-    : `SHIFT_RIGHT:
- MOV BX,15
-SHIFT_RIGHT_A:
- MOV AL,CS:[SI+BX-1]
- MOV CS:[SI+BX],AL
- DEC BX
- JNZ SHIFT_RIGHT_A
-
- MOV SI,OFFSET BUF1
- MOV BX,15
-SHIFT_RIGHT_B:
- MOV AL,CS:[SI+BX-1]
- MOV CS:[SI+BX],AL
- DEC BX
- JNZ SHIFT_RIGHT_B`
-}
-
- POP DI
- POP SI
- POP DX
- POP CX
- POP BX
- POP AX
- RET
+;--------------------------------------------------
+; Delay
+;--------------------------------------------------
 
 MARQUEE_DELAY:
- MOV CX,${delay}
+\tMOV CX,${delay}
+
 MD1:
- PUSH CX
- MOV CX,00FFH
+\tPUSH CX
+\tMOV CX,00FFH
+
 MD2:
- LOOP MD2
- POP CX
- LOOP MD1
- RET
+\tLOOP MD2
 
-LOADGLYPH:
- PUSH SI
- PUSH DI
- PUSH CX
+\tPOP CX
+\tLOOP MD1
 
- MOV SI,OFFSET TAB
- MOV DI,OFFSET BUF0
- MOV CX,16
- COPY_TOP:
- MOV AL,CS:[SI]
- MOV CS:[DI],AL
- INC SI
- INC DI
- LOOP COPY_TOP
+\tRET
 
- MOV DI,OFFSET BUF1
- MOV CX,16
- COPY_BOTTOM:
- MOV AL,CS:[SI]
- MOV CS:[DI],AL
- INC SI
- INC DI
- LOOP COPY_BOTTOM
+;--------------------------------------------------
+; Load original glyph into buffer
+;--------------------------------------------------
 
- POP CX
- POP DI
- POP SI
- RET
+LOAD_GLYPH:
+\tMOV SI,OFFSET TAB
+\tMOV DI,OFFSET BUF
+\tMOV CX,32
 
-OFFLED:
- MOV DX,XPA
- MOV AL,0FFH
- OUT DX,AL
- MOV DX,XPB
- OUT DX,AL
- RET
+LOAD_LOOP:
+\tMOV AL,CS:[SI]
+\tMOV CS:[DI],AL
 
-TAB:
-; 16x16 glyph
-DB  ${g.top.map(asmHex).join(",")}
-DB  ${g.bot.map(asmHex).join(",")}
+\tINC SI
+\tINC DI
 
-CODE ENDS
-END START
+\tLOOP LOAD_LOOP
+
+\tRET
+
+;--------------------------------------------------
+; Reverse 8 bits
+;--------------------------------------------------
+
+REV:
+\tPUSH CX
+\tMOV CX,0008H
+
+REV1:
+\tSHR AL,1
+\tRCL DH,1
+\tLOOP REV1
+
+\tMOV AL,DH
+\tPOP CX
+\tRET
+
+;--------------------------------------------------
+; Blank display
+;--------------------------------------------------
+
+BLANK:
+\tMOV DX,XPA
+\tMOV AL,0FFH
+\tOUT DX,AL
+
+\tMOV DX,XPB
+\tOUT DX,AL
+
+\tMOV DX,XPC
+\tMOV AL,00H
+\tOUT DX,AL
+
+\tMOV DX,PO
+\tOUT DX,AL
+
+\tRET
+
+;--------------------------------------------------
+; Original glyph
+;--------------------------------------------------
+
+${makeTab()}
+
+CODE\tENDS
+END\tSTART
 `;
       }
+
+      /*
+       * ============================================================
+       * NAME SANITIZATION
+       * ============================================================
+       */
+
+      function sanitizeName(name) {
+        return name
+          .replace(
+            /[^A-Za-z0-9_ -]/g,
+            ""
+          )
+          .trim() || "GLYPH";
+      }
+
+      /*
+       * ============================================================
+       * FULL ASSEMBLY
+       * ============================================================
+       */
+
       function getFullAsm() {
-        return document.getElementById("exportMode").value === "marquee"
-          ? fullAsmMarquee()
-          : fullAsmStatic();
+        const mode =
+          document.getElementById(
+            "exportMode"
+          ).value;
+
+        if (mode === "marquee") {
+          return makeMarquee();
+        }
+
+        return makeStaticAsm();
       }
-      function downloadFullAsm() {
-        const text = getFullAsm();
-        const a = document.createElement("a");
-        a.href = URL.createObjectURL(new Blob([text], { type: "text/plain" }));
-        a.download =
-          "LEDQD_" +
-          (document.getElementById("exportMode").value === "marquee"
-            ? "MARQUEE"
-            : "STATIC") +
-          ".ASM";
-        a.click();
-        setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+
+      /*
+       * ============================================================
+       * COPY / DOWNLOAD
+       * ============================================================
+       */
+
+      function copyAsm() {
+        navigator.clipboard.writeText(
+          makeTab()
+        );
       }
+
       function copyFullAsm() {
-        navigator.clipboard.writeText(getFullAsm());
+        navigator.clipboard.writeText(
+          getFullAsm()
+        );
       }
+
+      function downloadAsm() {
+        const text = makeTab();
+
+        const name =
+          sanitizeName(
+            document.getElementById(
+              "charName"
+            ).value || "glyph"
+          );
+
+        const a =
+          document.createElement("a");
+
+        a.href =
+          URL.createObjectURL(
+            new Blob(
+              [text],
+              {
+                type: "text/plain"
+              }
+            )
+          );
+
+        a.download =
+          name + "_TAB.asm";
+
+        a.click();
+
+        setTimeout(
+          () =>
+            URL.revokeObjectURL(
+              a.href
+            ),
+          1000
+        );
+      }
+
+      function downloadFullAsm() {
+        const text =
+          getFullAsm();
+
+        const mode =
+          document.getElementById(
+            "exportMode"
+          ).value;
+
+        const name =
+          sanitizeName(
+            document.getElementById(
+              "charName"
+            ).value || "GLYPH"
+          );
+
+        const suffix =
+          mode === "marquee"
+            ? "MARQUEE"
+            : "STATIC";
+
+        const a =
+          document.createElement("a");
+
+        a.href =
+          URL.createObjectURL(
+            new Blob(
+              [text],
+              {
+                type: "text/plain"
+              }
+            )
+          );
+
+        a.download =
+          "D82R_" +
+          name +
+          "_" +
+          suffix +
+          ".ASM";
+
+        a.click();
+
+        setTimeout(
+          () =>
+            URL.revokeObjectURL(
+              a.href
+            ),
+          1000
+        );
+      }
+
+      /*
+       * ============================================================
+       * CONTROL EVENT LISTENERS
+       * ============================================================
+       */
+
+      [
+        "bitOrder",
+        "active",
+        "outputFormat",
+        "charName",
+        "exportMode",
+        "exportDir",
+        "exportSpeed"
+      ].forEach((id) => {
+        document.getElementById(id).oninput =
+          render;
+      });
+
+      /*
+       * ============================================================
+       * CANVAS MARQUEE PREVIEW
+       * ============================================================
+       */
+
+      const canvas =
+        document.getElementById(
+          "canvas"
+        );
+
+      const ctx =
+        canvas.getContext("2d");
+
+      function drawPreview() {
+        ctx.fillStyle =
+          "#050912";
+
+        ctx.fillRect(
+          0,
+          0,
+          canvas.width,
+          canvas.height
+        );
+
+        const text =
+          document.getElementById(
+            "marqueeText"
+          ).value || "A";
+
+        const cell = 16;
+        const W = 18;
+
+        const off =
+          document.createElement(
+            "canvas"
+          );
+
+        off.width =
+          Math.max(
+            16,
+            text.length * 18 + 16
+          );
+
+        off.height = 16;
+
+        const oc =
+          off.getContext("2d");
+
+        oc.fillStyle =
+          "black";
+
+        oc.fillRect(
+          0,
+          0,
+          off.width,
+          16
+        );
+
+        oc.fillStyle =
+          "white";
+
+        oc.font =
+          "bold 15px monospace";
+
+        oc.textBaseline =
+          "top";
+
+        oc.fillText(
+          text,
+          1,
+          -1
+        );
+
+        const start =
+          offset % off.width;
+
+        const sx =
+          Math.floor(start);
+
+        for (
+          let r = 0;
+          r < 16;
+          r++
+        ) {
+          for (
+            let c = 0;
+            c < 16;
+            c++
+          ) {
+            const x =
+              sx + c;
+
+            const y = r;
+
+            let pix = 0;
+
+            if (
+              x >= 0 &&
+              x < off.width
+            ) {
+              const d =
+                oc.getImageData(
+                  x,
+                  y,
+                  1,
+                  1
+                ).data;
+
+              pix =
+                d[0] > 100;
+            }
+
+            ctx.fillStyle =
+              pix
+                ? "#61dafb"
+                : "#151d30";
+
+            ctx.fillRect(
+              c * W + 1,
+              r * W + 1,
+              14,
+              14
+            );
+          }
+        }
+      }
+
+      function animate() {
+        if (!playing) {
+          return;
+        }
+
+        offset += 1;
+
+        drawPreview();
+
+        timer =
+          setTimeout(
+            animate,
+            Math.max(
+              20,
+              220 -
+                Number(
+                  document.getElementById(
+                    "speed"
+                  ).value
+                ) *
+                  10
+            )
+          );
+      }
+
+      function toggleAnim() {
+        playing =
+          !playing;
+
+        document.getElementById(
+          "animBtn"
+        ).textContent =
+          playing
+            ? "Pause"
+            : "Play";
+
+        if (playing) {
+          animate();
+        } else {
+          clearTimeout(timer);
+        }
+      }
+
+      function resetAnim() {
+        offset = 0;
+
+        playing = false;
+
+        clearTimeout(timer);
+
+        document.getElementById(
+          "animBtn"
+        ).textContent =
+          "Play";
+
+        drawPreview();
+      }
+
+      /*
+       * ============================================================
+       * TEXT -> BITMAP
+       * ============================================================
+       */
+
+      function textToBitmap() {
+        const text =
+          document.getElementById(
+            "textInput"
+          ).value || "A";
+
+        const off =
+          document.createElement(
+            "canvas"
+          );
+
+        off.width = 128;
+        off.height = 32;
+
+        const oc =
+          off.getContext("2d");
+
+        oc.fillStyle =
+          "black";
+
+        oc.fillRect(
+          0,
+          0,
+          128,
+          32
+        );
+
+        oc.fillStyle =
+          "white";
+
+        oc.font =
+          document.getElementById(
+            "font"
+          ).value;
+
+        oc.textBaseline =
+          "top";
+
+        oc.fillText(
+          text,
+          0,
+          0
+        );
+
+        const data =
+          oc.getImageData(
+            0,
+            0,
+            128,
+            32
+          ).data;
+
+        bits =
+          Array.from(
+            { length: 16 },
+            () =>
+              Array(16).fill(0)
+          );
+
+        for (
+          let r = 0;
+          r < 16;
+          r++
+        ) {
+          for (
+            let c = 0;
+            c < 16;
+            c++
+          ) {
+            bits[r][c] =
+              data[
+                (r * 128 + c) * 4
+              ] > 100
+                ? 1
+                : 0;
+          }
+        }
+
+        render();
+      }
+
+      /*
+       * ============================================================
+       * INITIAL RENDER
+       * ============================================================
+       */
 
       render();
       drawPreview();
